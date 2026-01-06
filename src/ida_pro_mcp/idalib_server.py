@@ -31,6 +31,9 @@ def main():
         "--unsafe", action="store_true", help="Enable unsafe functions (DANGEROUS)"
     )
     parser.add_argument(
+        "--session-id", type=str, help="Session ID (used by session manager)"
+    )
+    parser.add_argument(
         "input_path", type=Path, help="Path to the input file to analyze."
     )
     args = parser.parse_args()

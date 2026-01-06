@@ -410,15 +410,30 @@ def get_image_size() -> int:
 
 
 def parse_address(addr: str | int) -> int:
+    """Parse address from integer, hex string, or symbol name."""
     if isinstance(addr, int):
         return addr
+
+    # Try parsing as integer (decimal or hex with 0x prefix)
     try:
         return int(addr, 0)
     except ValueError:
-        for ch in addr:
-            if ch not in "0123456789abcdefABCDEF":
-                raise IDAError(f"Failed to parse address: {addr}")
-        raise IDAError(f"Failed to parse address (missing 0x prefix): {addr}")
+        pass
+
+    # Try parsing as hex without 0x prefix (e.g., "401000")
+    try:
+        # Check if it looks like a hex number (only hex digits)
+        if all(ch in "0123456789abcdefABCDEF" for ch in addr):
+            return int(addr, 16)
+    except ValueError:
+        pass
+
+    # Try looking up as a symbol name
+    ea = idaapi.get_name_ea(idaapi.BADADDR, addr)
+    if ea != idaapi.BADADDR:
+        return ea
+
+    raise IDAError(f"Failed to parse address or find symbol: {addr}")
 
 
 def normalize_list_input(value: list | str) -> list:
