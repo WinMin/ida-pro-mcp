@@ -233,6 +233,22 @@ LLM: xrefs_to("0x401000")
 -> {xrefs from malware.exe}
 ```
 
+### Testing SSE Transport
+
+You can test the SSE and Streamable HTTP transports using the built-in test script:
+
+```sh
+# Test with a manually started server
+uv run idalib-session-mcp --transport http://127.0.0.1:8744/sse &
+uv run python -m ida_pro_mcp.test_sse_transport --host 127.0.0.1 --port 8744
+
+# Or let the test script start the server automatically
+uv run python -m ida_pro_mcp.test_sse_transport --start-server
+
+# Test with a binary for full session functionality
+uv run python -m ida_pro_mcp.test_sse_transport --start-server /path/to/binary
+```
+
 ### Comparison with idalib-mcp
 
 | Feature | idalib-mcp | idalib-session-mcp |

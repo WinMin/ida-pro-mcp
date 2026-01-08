@@ -252,14 +252,17 @@ class McpServer:
             return self.resources.method(func)
         return decorator
 
-    def serve(self, host: str, port: int, *, background = True, request_handler = McpHttpRequestHandler):
+    def serve(self, host: str, port: int, *, background = True, request_handler = McpHttpRequestHandler, threaded = True):
         if self._running:
             print("[MCP] Server is already running")
             return
 
         # Create server with deferred binding
+        # Use ThreadingHTTPServer for SSE support (needs concurrent GET + POST)
+        # In headless mode, use non-threaded HTTPServer to run on main thread
         assert issubclass(request_handler, McpHttpRequestHandler)
-        self._http_server = (ThreadingHTTPServer if background else HTTPServer)(
+        ServerClass = ThreadingHTTPServer if threaded else HTTPServer
+        self._http_server = ServerClass(
             (host, port),
             request_handler,
             bind_and_activate=False

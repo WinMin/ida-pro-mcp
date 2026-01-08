@@ -4,6 +4,7 @@ import functools
 import os
 import sys
 import time
+import threading
 from enum import IntEnum
 import idaapi
 import ida_kernwin
@@ -16,6 +17,9 @@ from .zeromcp.jsonrpc import get_current_cancel_event, RequestCancelledError
 # ============================================================================
 
 ida_major, ida_minor = map(int, idaapi.get_kernel_version().split("."))
+
+# Store the main thread ID at module load time
+_main_thread_id = threading.current_thread().ident
 
 
 class IDAError(McpToolError):
@@ -58,6 +62,11 @@ call_stack = queue.LifoQueue()
 def _sync_wrapper(ff):
     """Call a function ff with a specific IDA safety_mode."""
 
+    # If already on main thread, execute directly (common in headless mode)
+    if threading.current_thread().ident == _main_thread_id:
+        return ff()
+
+    # Otherwise, use execute_sync to run on main thread
     res_container = queue.Queue()
 
     def runned():

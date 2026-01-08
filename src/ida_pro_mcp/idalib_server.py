@@ -63,8 +63,6 @@ def main():
     ida_auto.auto_wait()
 
     # Setup signal handlers to ensure IDA database is properly closed on shutdown.
-    # When a signal arrives, our handlers execute first, allowing us to close the
-    # IDA database cleanly before the process terminates.
     def cleanup_and_exit(signum, frame):
         logger.info("Closing IDA database...")
         idapro.close_database()
@@ -74,10 +72,10 @@ def main():
     signal.signal(signal.SIGINT, cleanup_and_exit)
     signal.signal(signal.SIGTERM, cleanup_and_exit)
 
-    # NOTE: npx -y @modelcontextprotocol/inspector for debugging
-    # TODO: with background=True the main thread (this one) does not fake any
-    # work from @idasync, so we deadlock.
-    MCP_SERVER.serve(host=args.host, port=args.port, background=False)
+    # Start HTTP server on main thread with threaded=False
+    # This ensures IDA operations run on the main thread, avoiding execute_sync issues
+    # Note: SSE won't work properly in this mode, but Streamable HTTP works fine
+    MCP_SERVER.serve(host=args.host, port=args.port, background=False, threaded=False)
 
 
 if __name__ == "__main__":
